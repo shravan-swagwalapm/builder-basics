@@ -1,0 +1,19 @@
+[
+ {
+  "backlog": 1,
+  "topic": "Your API key goes public the moment you push it",
+  "folder": "shorts/2026-11-api-key-leak",
+  "status": "approved",
+  "date": "2026-11-06",
+  "sha256": "c2626f175d194f38"
+ },
+ {
+  "backlog": 2,
+  "topic": "What is RAG?",
+  "folder": "shorts/2026-11-rag",
+  "status": "approved",
+  "date": "2026-11-06",
+  "sha256": "014da94216e9ee47",
+  "version": "V5 final"
+ }
+]

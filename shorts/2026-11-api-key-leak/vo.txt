@@ -1,0 +1,14 @@
+In 2023, researchers at Orca Security pushed a real cloud key to a public GitHub repo, on purpose.
+Two minutes later, someone was using it.
+That wasn't a rare event.
+GitGuardian counted 28.65 million secrets in public GitHub commits last year, and leaked AI keys grew 81%.
+Because a public commit is searchable, and scanners search all day for anything shaped like a key.
+So deleting the commit doesn't save you.
+The key still lives in git history, in forks, and in caches.
+Toyota learned this slowly: a contractor's public repo exposed its server key for almost five years.
+That's why GitHub built push protection.
+By default, it stops a push that contains an OpenAI or Anthropic key, and both companies switch reported keys off.
+But Gemini API keys aren't on that list.
+So keep one rule: your dot env file goes in dot gitignore before your first commit.
+And if a key ever leaks, rotate it first. Clean the history later.
+In that test, two minutes was the whole head start.

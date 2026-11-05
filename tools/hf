@@ -1,0 +1,12 @@
+#!/bin/zsh
+# HyperFrames wrapper for the Builder Basics pipeline.
+# Forces telemetry off and allowlists LOCAL-ONLY subcommands. Anything that can upload
+# (publish, cloud, lambda, cloudrun, auth, reverse, billing, templates, feedback, skills, update)
+# is refused here on purpose — add to ALLOW only after checking it never leaves the machine.
+export HYPERFRAMES_NO_TELEMETRY=1 DO_NOT_TRACK=1 HYPERFRAMES_SKIP_SKILLS=1  # never auto-write into ~/.claude/skills
+ALLOW=(init add catalog lint check validate render snapshot inspect keyframes measure audio beats compositions timeline info docs doctor normalize-audio compare preview)
+cmd="$1"
+if [[ -z "$cmd" || ${ALLOW[(Ie)$cmd]} -eq 0 ]]; then
+  print -u2 "hf: '$cmd' is not on the local-only allowlist (see tools/hf)"; exit 64
+fi
+exec "$HOME/swagwalapm-shorts/engine/node_modules/.bin/hyperframes" "$@"

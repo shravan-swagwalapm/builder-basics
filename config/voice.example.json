@@ -1,0 +1,14 @@
+{
+ "_note": "Copy to config/voice.json (git-ignored) and set voice_id. The single source of truth for the voice: tts.py reads only this file.",
+ "voice_id": "YOUR_ELEVENLABS_VOICE_ID",
+ "voice_name": "Your voice clone",
+ "model_id": "eleven_v4",
+ "stability": 0.75,
+ "similarity_boost": 0.85,
+ "text_prefix": "[Indian English accent] ",
+ "other_tags": "none \u2014 no emotion tags (whisper/low voice/etc. rejected 2026-11-05)",
+ "language_code": null,
+ "output_format": "mp3_44100_128",
+ "seed": 42,
+ "post": "tools/master.py (-14 LUFS, -1 dBTP, pauses capped 0.25s)"
+}

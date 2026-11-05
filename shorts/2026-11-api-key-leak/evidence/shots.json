@@ -1,0 +1,44 @@
+[
+ {
+  "id": "orca",
+  "url": "https://orca.security/wp-content/uploads/2023/06/orca-security-2023-honeypotting-in-the-cloud-report-attacker-tactics-and-techniques-revealed.pdf",
+  "expect": "honeypot",
+  "phrases": [
+   "2 minutes before keys were exploited",
+   "it took only 2 minutes"
+  ]
+ },
+ {
+  "id": "gitguardian",
+  "url": "https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/",
+  "expect": "Secrets Sprawl",
+  "phrases": [
+   "AI-Service Leaks Surge 81%"
+  ]
+ },
+ {
+  "id": "ghdelete",
+  "url": "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository",
+  "expect": "Removing sensitive data",
+  "phrases": [
+   "cached views"
+  ]
+ },
+ {
+  "id": "toyota",
+  "url": "https://global.toyota/jp/newsroom/corporate/38095972.html",
+  "expect": "T-Connect",
+  "phrases": [
+   "2017年12月～2022年9月15日"
+  ],
+  "dark": false
+ },
+ {
+  "id": "pushprot",
+  "url": "https://docs.github.com/en/code-security/concepts/secret-security/push-protection",
+  "expect": "push protection",
+  "phrases": [
+   "Stops you from pushing secrets to public repositories"
+  ]
+ }
+]

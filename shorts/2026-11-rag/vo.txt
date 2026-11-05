@@ -1,0 +1,13 @@
+In 2023, two lawyers in a New York court cited 6 cases that ChatGPT found for them.
+None of them existed.
+One lawyer asked ChatGPT if a case called Varghese was real. It said yes.
+They stood by those cases. So the court fined them $5,000.
+In February 2024, a tribunal made Air Canada pay for a wrong refund rule its chatbot gave a grieving customer.
+The ruling said: it makes no difference whether the information comes from a static page or a chatbot.
+So whatever your bot says, you said it.
+If you build one, don't let it answer from what it learned in training. Make it read your pages first. That's called RAG, retrieval-augmented generation.
+Your documents get cut into small chunks, so you can search them by meaning.
+When a question comes in, the closest chunks are found and go into the prompt with it.
+Now the model answers from your pages, like an open-book exam, and it can show you the page it used.
+But it's not a guarantee. If search brings back the wrong page, you get a wrong answer that looks sourced.
+Those 6 cases had no page behind them. So for every AI answer, ask which page it's from, and open that page.

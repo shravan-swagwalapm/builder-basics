@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080, height=1920" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;600;700&display=block" rel="stylesheet" />
+<style>
+  /* V5 visual grammar: BLUEPRINT FLOWCHART (storyboard.md). Graphite + grid; nodes drawn on with registration ticks;
+     labelled orthogonal edges with packets; the board scrolls scene to scene; a left flow spine tracks progress.
+     Every caption phrase owns a visual event (build.py guard). Deliberately unlike Short #1 (glow, rings, top stepper). */
+  :root {
+    --bg: #0A0C10; --ink: #EDEFF5; --mute: #8A93A6; --line: #C9D1E3; --grid: rgba(150,170,210,.07);
+    --lime: #B8F25B; --amber: #FFB547; --red: #FF5C5C; --violet: #A99BFF;
+    --display: "Plus Jakarta Sans", "Helvetica Neue", sans-serif; --mono: "JetBrains Mono", Menlo, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+  #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; font-family: var(--display); color: var(--ink); }
+  #bg { position: absolute; inset: 0; background: var(--bg); }
+  #grid { position: absolute; left: 0; top: 0; width: 1080px; height: 2112px;
+    background-image: linear-gradient(var(--grid) 1.5px, transparent 1.5px), linear-gradient(90deg, var(--grid) 1.5px, transparent 1.5px);
+    background-size: 48px 48px; }
+  #tint { position: absolute; inset: 0; background: var(--red); opacity: 0; }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 48%, transparent 55%, rgba(0,0,0,.55)); pointer-events: none; }
+
+  .scene { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; opacity: 0; }
+  .ed { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: visible; pointer-events: none; }
+  .eb { fill: none; stroke-width: 2.5; opacity: 0; }
+  .ef { fill: none; stroke-width: 2.5; stroke-dasharray: 6 12; opacity: 0; }
+  .pk { opacity: 0; }
+
+  .nd { position: absolute; display: flex; align-items: center; gap: 14px; padding: 0 20px; border: 1.5px solid var(--k); border-radius: 10px;
+    background: #0F1219; color: var(--k); font: 600 28px var(--mono); letter-spacing: .05em; opacity: 0; }
+  .nd::before, .nd::after { content: ""; position: absolute; width: 12px; height: 12px; border-color: var(--k); border-style: solid; opacity: .8; }
+  .nd::before { left: -9px; top: -9px; border-width: 1.5px 0 0 1.5px; }
+  .nd::after { right: -9px; bottom: -9px; border-width: 0 1.5px 1.5px 0; }
+  .nd .ic { width: 46px; height: 46px; flex: none; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .nd .nl { color: var(--ink); white-space: nowrap; }
+  .nd .sub { position: absolute; left: 20px; top: 98px; font: 600 28px var(--mono); color: #FF9A9A; white-space: nowrap; }
+  .bound { position: absolute; border: 2px dashed var(--k); border-radius: 16px; opacity: 0; }
+  .bound .tag { position: absolute; left: 18px; top: -26px; font: 800 30px var(--mono); color: #0A0C10; background: var(--k); padding: 4px 14px; border-radius: 8px; letter-spacing: .08em; }
+  .el { position: absolute; font: 600 28px var(--mono); color: var(--k); background: #0A0C10; padding: 2px 10px; border: 1.5px solid var(--k); border-radius: 6px; white-space: nowrap; opacity: 0; }
+  .cite { position: absolute; display: flex; align-items: center; gap: 12px; height: 62px; padding: 0 18px; border: 1.5px solid var(--k); border-radius: 8px;
+    background: #10141C; font: 700 28px var(--mono); color: var(--ink); letter-spacing: .05em; opacity: 0; --k: #C9D1E3; }
+  .cite em { font-style: normal; color: var(--k); }
+  .cite i { position: absolute; left: 46px; right: 12px; top: 50%; height: 3px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0); }
+  .slot { position: absolute; width: 74px; height: 62px; border: 2px dashed var(--red); border-radius: 8px; opacity: 0; }
+  .lbl { position: absolute; left: 110px; width: 860px; text-align: center; font: 600 34px var(--mono); letter-spacing: .08em; color: var(--mute); opacity: 0; }
+  .glyph { position: absolute; font: 800 64px var(--display); color: var(--red); opacity: 0; line-height: 1; }
+
+  .win { position: absolute; border: 1.5px solid #2C3343; border-radius: 16px; background: #0E1117; opacity: 0; }
+  .win .bar { position: absolute; left: 0; top: 0; right: 0; height: 64px; border-bottom: 1px solid #222838; background: #131722; border-radius: 16px 16px 0 0; }
+  .win .bar i { position: absolute; top: 26px; width: 12px; height: 12px; border-radius: 50%; background: #343B4D; }
+  .win .bar span { position: absolute; left: 96px; top: 14px; font: 600 28px var(--mono); color: var(--violet); }
+  .bub { position: absolute; font: 600 38px var(--display); padding: 18px 26px; border-radius: 22px; white-space: nowrap; opacity: 0; }
+  .bub.me { background: #2A3550; color: #EEF1FF; border-bottom-right-radius: 6px; }
+  .bub.ai { background: #171B26; color: var(--ink); border: 1.5px solid #2C3343; border-bottom-left-radius: 6px; }
+  .bub .cur { display: inline-block; width: 3px; height: 36px; background: #EEF1FF; vertical-align: -6px; margin-left: 3px; }
+  .stamp { position: absolute; z-index: 5; font: 800 44px var(--mono); color: var(--red); border: 4px solid var(--red); border-radius: 10px; padding: 6px 18px; letter-spacing: .06em; opacity: 0; white-space: nowrap; }
+
+  .map { position: absolute; border: 1.5px solid #2C3343; border-radius: 12px; background: rgba(15,18,25,.85); opacity: 0; }
+  .map .cl { position: absolute; font: 600 28px var(--mono); color: var(--mute); letter-spacing: .06em; }
+  .map svg { position: absolute; left: 0; top: 0; overflow: visible; }
+  .tile { position: absolute; left: 0; top: 0; width: 150px; height: 46px; border-radius: 6px; background: #1A2030; border: 1.5px solid var(--line); opacity: 0; }
+  .tile b { position: absolute; left: 12px; right: 30px; top: 19px; height: 6px; border-radius: 3px; background: rgba(201,209,227,.55); }
+  .ring { position: absolute; left: 0; top: 0; width: 300px; height: 300px; border-radius: 50%; border: 3px solid var(--amber); opacity: 0; }
+  .row { position: absolute; height: 62px; border: 1.5px dashed #3A4256; border-radius: 8px; font: 600 28px var(--mono); color: var(--mute); padding: 12px 18px; opacity: 0; }
+  .fill { position: absolute; left: 0; top: 0; height: 62px; border-radius: 8px; background: rgba(184,242,91,.14); border: 1.5px solid var(--lime); opacity: 0; }
+  .cursor { position: absolute; left: 0; top: 0; width: 44px; height: 54px; opacity: 0; }
+
+  .evcard { position: absolute; border-radius: 14px; overflow: hidden; opacity: 0; background: #0D1117; border: 1.5px solid #3A4256; }
+  .evbar { position: absolute; left: 0; top: 0; right: 0; height: 60px; background: #151A24; border-bottom: 1px solid #262D3D; font: 500 28px var(--mono); color: #C9D1E3; }
+  .evbar i { position: absolute; top: 24px; width: 12px; height: 12px; border-radius: 50%; background: #3A4256; }
+  .evbar span { position: absolute; left: 92px; top: 12px; }
+  .evbar b { position: absolute; right: 20px; top: 12px; font-weight: 500; color: var(--amber); }
+  .evwin { position: absolute; left: 0; top: 60px; overflow: hidden; }
+  .evin { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .evin img { display: block; }
+  .hl { position: absolute; background: #FFFFFF; mix-blend-mode: difference; transform-origin: 0 50%; transform: scaleX(0); }
+  #flashov { position: absolute; inset: 0; background: #E9ECFF; opacity: 0; pointer-events: none; }
+
+  .ttl { position: absolute; left: 110px; width: 900px; top: 300px; font-size: 70px; line-height: 1.06; letter-spacing: -0.03em; }
+  .ttl .tw { display: inline-block; opacity: 0; font-weight: 800; }
+  .ttl .lt { font-weight: 300; }
+  .ttl .lime { color: var(--lime); } .ttl .red { color: var(--red); } .ttl .amber { color: var(--amber); } .ttl .violet { color: var(--violet); }
+  #spine { position: absolute; left: 0; top: 0; width: 100px; height: 1920px; }
+  .capg { position: absolute; left: 70px; width: 940px; top: 1400px; text-align: center; font: 700 62px var(--display); letter-spacing: -0.015em; line-height: 1.15; opacity: 0; color: #5E6577; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="__END__" data-width="1080" data-height="1920" data-fps="30" data-motion-blur="on">
+  <div id="bg" data-motion-blur="off"><div id="grid" data-layout-ignore></div><div id="tint"></div></div>
+  <div id="board"><!--__SCENES__--></div>
+  <div id="flashov" data-layout-ignore></div>
+  <svg id="spine" viewBox="0 0 100 1920" data-layout-ignore><!--__SPINE__--></svg>
+  <!--__TITLES__-->
+  <!--__CAPTIONS__-->
+  <div id="vignette"></div>
+  <audio id="mix" class="clip" src="assets/mix.wav" data-start="0" data-duration="__END__" data-has-audio="true"></audio>
+</div>
+<script>
+/*__T__*/
+const tl = gsap.timeline({ paused: true });
+const TITLE_STYLES = {
+  blur: [{ opacity: 0, filter: "blur(6px)", y: 0 }, { duration: 0.13, ease: "power2.out", stagger: 0.067 }],
+  line: [{ opacity: 0, filter: "blur(8px)", y: 0 }, { duration: 0.18, ease: "power2.out", stagger: 0 }],
+  rise: [{ opacity: 0, filter: "blur(0px)", y: 40 }, { duration: 0.5, ease: "expo.out", stagger: 0.08 }],
+};
+function title(id, t0, t1, style) {
+  const w = id + " .tw", [from, how] = TITLE_STYLES[style];
+  tl.fromTo(w, from, { opacity: 1, filter: "blur(0px)", y: 0, ...how, immediateRender: false }, t0);
+  if (t1 < T.end) tl.to(w, { opacity: 0, filter: "blur(6px)", duration: 0.18, ease: "power3.in", stagger: 0.03 }, t1 - 0.24);
+}
+function tint(color, op, t) { tl.to("#tint", { backgroundColor: color, opacity: op, duration: 0.4, ease: "power2.inOut" }, t); }
+tl.fromTo("#grid", { y: 0 }, { y: -96, duration: T.end, ease: "none", immediateRender: true }, 0);   // we travel down the board
+tl.fromTo(".ef", { strokeDashoffset: 0 }, { strokeDashoffset: -18 * Math.round(T.end * 3), duration: T.end, ease: "none", immediateRender: true }, 0);   // live edges flow
+
+/*__JS__*/
+/*__CAPTIONS_JS__*/
+
+window.__timelines = window.__timelines || {};
+window.__timelines["main"] = tl;
+tl.seek(0);
+</script>
+</body>
+</html>

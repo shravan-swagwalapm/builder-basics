@@ -1,0 +1,127 @@
+[
+ {
+  "id": "mata",
+  "url": "https://www.courtlistener.com/docket/63107798/54/mata-v-avianca-inc/",
+  "expect": "Avianca",
+  "phrases": [
+   "the fake \"Varghese\", \"Shaboon\", \"Petersen\", \"Martinez\", \"Durden\" and \"Miller\" opinions",
+   "A penalty of $5,000 is jointly and severally imposed on Respondents"
+  ],
+  "redact": [
+   "LoDuca",
+   "Schwartz",
+   "Levidow",
+   "Mata",
+   "Roberto"
+  ]
+ },
+ {
+  "id": "crt",
+  "url": "https://decisions.civilresolutionbc.ca/crt/crtd/en/item/525448/index.do?iframe=true",
+  "expect": "Air Canada",
+  "phrases": [
+   "It makes no difference whether the information comes from a static page or a chatbot."
+  ],
+  "redact": [
+   "Moffatt",
+   "Moffat",
+   "Jake"
+  ],
+  "dark": false
+ },
+ {
+  "id": "aws",
+  "url": "https://aws.amazon.com/what-is/retrieval-augmented-generation/",
+  "expect": "Retrieval-Augmented Generation",
+  "phrases": [
+   "references an authoritative knowledge base outside of its training data sources before generating a response"
+  ]
+ },
+ {
+  "id": "google",
+  "url": "https://cloud.google.com/use-cases/retrieval-augmented-generation",
+  "expect": "Retrieval",
+  "phrases": [
+   "If your retrieved information is irrelevant, your generation could be grounded but off-topic or incorrect."
+  ]
+ },
+ {
+  "id": "anthropic",
+  "url": "https://www.anthropic.com/research/contextual-retrieval",
+  "expect": "Contextual Retrieval",
+  "phrases": [
+   "Break down the knowledge base"
+  ]
+ },
+ {
+  "id": "arxiv",
+  "url": "https://arxiv.org/abs/2005.11401",
+  "expect": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+  "phrases": [
+   "retrieval-augmented generation (RAG)"
+  ],
+  "dark": false
+ },
+ {
+  "id": "openai",
+  "url": "https://developers.openai.com/api/docs/guides/optimizing-llm-accuracy",
+  "expect": "accuracy",
+  "phrases": [
+   "You have the textbook with you, and can look up the right information to answer the question with."
+  ]
+ },
+ {
+  "id": "anth_chunk",
+  "url": "https://www.anthropic.com/research/contextual-retrieval",
+  "expect": "Contextual Retrieval",
+  "phrases": [
+   "Break down the knowledge base",
+   "convert these chunks into vector embeddings that encode meaning"
+  ]
+ },
+ {
+  "id": "anth_prompt",
+  "url": "https://www.anthropic.com/research/contextual-retrieval",
+  "expect": "Contextual Retrieval",
+  "phrases": [
+   "the most relevant chunks are added to the prompt sent to the generative model."
+  ]
+ },
+ {
+  "id": "aws_cite",
+  "url": "https://aws.amazon.com/what-is/retrieval-augmented-generation/",
+  "expect": "Retrieval-Augmented Generation",
+  "phrases": [
+   "The output can include citations or references to sources."
+  ]
+ },
+ {
+  "id": "mata_head",
+  "url": "https://www.courtlistener.com/docket/63107798/54/mata-v-avianca-inc/",
+  "expect": "Avianca",
+  "phrases": [
+   "June 22nd, 2023"
+  ],
+  "redact": [
+   "LoDuca",
+   "Schwartz",
+   "Levidow",
+   "Mata",
+   "Roberto"
+  ]
+ },
+ {
+  "id": "crt_head",
+  "url": "https://decisions.civilresolutionbc.ca/crt/crtd/en/item/525448/index.do?iframe=true",
+  "expect": "Air Canada",
+  "phrases": [
+   "Date Issued: February 14, 2024"
+  ],
+  "redact": [
+   "Moffatt",
+   "Moffat",
+   "Jake"
+  ],
+  "dark": false
+ }
+]

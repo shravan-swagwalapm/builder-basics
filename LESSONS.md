@@ -1,0 +1,24 @@
+# Lessons
+
+Every mistake that shaped this pipeline: what broke, the root cause, and the guard now in place. Read before building.
+Source: the project log (dated). Numbers are referenced from PRINCIPLES.md.
+
+## 2026-11-05 — Builder Basics Short #1 (API-key leak)
+
+1. **The film's central object was invisible for every render.** Root cause: a later CSS rule `#key {... opacity: 0}` overrode an earlier `#key { opacity: 1 }`. A "never hide the key" patch treated the symptom. Guard: frame review checks that the travelling object is visible at t=0; reviewer brief asks for "elements that should be visible but are missing".
+2. **GSAP helper silently moved a positioned element off-canvas.** `show()` tweens `y: 10 → 0`, which clobbered a `gsap.set` y-position ("this is your key." rendered at the top edge). Rule: position with CSS `left/top`; let animation only nudge. Caught by `hf check` `canvas_overflow`.
+3. **Fade-ins without an explicit end value can be invisible in parallel renders.** Cold render workers seek mid-film. Rule: every `fromTo` states `opacity: 1` in the destination. Caught by `gsap_cold_seek_hidden_fromto_missing_reveal`.
+4. **Large blurred layers + camera zoom + motion blur render as blocky smears.** Root cause: background glows inside the zooming camera layer. Rule: background lives in its own layer outside `#world`, `data-motion-blur="off"`, no CSS `filter: blur` on big layers.
+5. **Image batch launched 10 Codex sessions at once; 5 hung forever and the script still exited 0.** zsh `jobs -r` did not see background functions, so the concurrency cap never applied. Guard: `tools/gen_images.sh` uses `xargs -P` + per-image watchdog in `gen_one.sh`; non-zero exit on any failure.
+6. **zsh `path` is `$PATH`.** A loop variable named `path` wiped PATH mid-command. Never name a variable `path` in zsh.
+7. **Facts implied by visuals, not words.** "~/my-ai-app" beside the Orca honeypot implied the 2-minute result was an AI key (it was AWS); "BLOCKED · SWITCHED OFF" merged two mechanisms; `git rm` without `git commit` was technically wrong. Only the cold reviewer caught these. Rule: reviewer brief always asks "what does each visual IMPLY?" and "would a developer object to any command?".
+8. **Two style rejections from Shravan:** isometric clay renders + cartoon mascot = kiddish; Hinglish TTS and emotion tags = unnatural. Style is now Rethink film + Algo Reels (research/style-guide.md); voice = config/voice.json.
+9. **"Found" is not "in the photo".** The GitGuardian quote matched a hidden off-screen copy (x 1310 in a 1290 px photo) and the marker landed on nothing. Guard: capture.mjs asserts every rect lies inside the photo (red-probed on the real case).
+10. **Measure in the layout you photograph.** A cookie banner was hidden by name only; it moved into the page flow and covered the quote after the rects were measured. Guard: viewport = photo, every `position:fixed` removed, rects re-measured after the scroll, elementFromPoint occlusion check (red-probed with a covering div).
+11. **A limit checked after adding the item lets one item through.** Captions "≥ 26 chars" was tested after appending the word, so 32-char groups wrapped to 2 lines. Rule: test the limit before adding. Guard: framecheck "caption lit on every spoken word" (156/172 red → 172/172 green).
+12. **A checker's expectation is part of the system under test.** framecheck first expected the voice +0.033 s late; only SFX are delayed (mix.py). Read the producer before writing the assertion.
+13. **The dossier can misquote its own source.** Orca's "It only took 2 minutes until…" is not in the PDF ("It took only 2 minutes for an attacker to use the leaked key"). Quotes on screen now come from capture, which fails if the words are not on the page.
+14. **Reusing the last Short's kit reused its look.** RAG v1–v4 swapped content into Short #1's components and read as the same film. Rule: pick the visual grammar from the topic first (style-guide "Visual grammar per Short"); Stage 5a.
+15. **Text overlaps were invisible to both gates.** `hf check` treats a node's label + sub-label as one block; pixel checks can't tell text apart; "POLICY PAGE" / "✕ not after travel" reached Shravan. Guard: tools/framecheck/textscan.mjs scans every frame's DOM text boxes (red-probed on that exact bug), wired into framecheck.
+16. **Every new palette broke a colour-based check.** Lime keywords read as "missing captions". Rule: checks key on brightness, not specific colours (max channel > 165).
+17. **A storyboard rule only exists if the build enforces it.** build.py fails when a caption phrase has no visual event (red-probed by deleting the "grieving customer" events).

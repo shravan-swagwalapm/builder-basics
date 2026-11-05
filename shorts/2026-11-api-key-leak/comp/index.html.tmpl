@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080, height=1920" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;700&display=block" rel="stylesheet" />
+<style>
+  /* Builder Basics look v2 = Rethink film (indigo ground, gradient numerals, dot matrix, light/heavy type)
+     + Algo Reels (header bar, section tag, stepper, neon hairline panels, "THIS IS CALLED" callouts) */
+  :root {
+    --bg: #07090F; --ink: #F4F6FF; --mute: #7D86A8; --faint: #3A4160;
+    --accent: #7C8CFF; --good: #4ADE9A; --warn: #F5B94A; --bad: #FF5A6E;
+    --display: "Plus Jakarta Sans", "Helvetica Neue", sans-serif; --mono: "JetBrains Mono", Menlo, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+  #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; font-family: var(--display); color: var(--ink); }
+
+  /* ground: soft indigo glows (Rethink); the world behind moves slowly */
+  #bg { position: absolute; inset: 0; overflow: hidden; }
+  #world { position: absolute; inset: 0; transform-origin: 540px 940px; }
+  #ground { position: absolute; inset: 0; background: var(--bg); }
+  .glow { position: absolute; border-radius: 50%; }   /* soft by gradient alone: CSS blur clipped square under zoom + motion blur */
+  #g1 { left: -220px; top: 320px; width: 960px; height: 960px; background: radial-gradient(circle, rgba(43,63,158,.5), rgba(43,63,158,.18) 40%, transparent 70%); }
+  #g2 { left: 420px; top: 800px; width: 900px; height: 900px; background: radial-gradient(circle, rgba(30,44,100,.6), rgba(30,44,100,.2) 40%, transparent 70%); }
+  #flood { position: absolute; left: -300px; top: -300px; width: 1680px; height: 2520px; background: var(--bad); opacity: 0; }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 50%, rgba(0,0,0,.6)); pointer-events: none; }
+
+  /* top: progress line only (Shravan 2026-11-05: no header/series text, no section tags) */
+  #bar { position: absolute; left: 70px; width: 940px; top: 120px; height: 3px; border-radius: 2px; background: var(--faint); }
+  #barfill { position: absolute; left: 0; top: 0; height: 2px; width: 940px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); box-shadow: 0 0 10px var(--accent); }
+
+  /* stepper rail (Algo Reels); the key travels it */
+  /* stepper = icon nodes joined by flowing arrows (no text) */
+  .step { position: absolute; top: 162px; width: 104px; height: 104px; border-radius: 50%; border: 2px solid var(--faint); background: rgba(12,15,28,.85); color: var(--mute); }
+  .step svg { position: absolute; left: 0; top: 0; width: 104px; height: 104px; overflow: visible; }
+  #s1 { left: 116px; } #s2 { left: 362px; } #s3 { left: 608px; } #s4 { left: 854px; }
+  #rail { position: absolute; left: 0; top: 0; width: 1080px; height: 400px; pointer-events: none; }
+  .flow { fill: none; stroke: #3A4160; stroke-width: 3; stroke-dasharray: 8 10; }
+  .arw { fill: none; stroke-width: 3; stroke-dasharray: 10 9; opacity: 0; }
+  #key { position: absolute; left: 0; top: 0; width: 64px; height: 30px; filter: drop-shadow(0 0 10px rgba(245,185,74,.8)); }
+  .kcopy { position: absolute; left: 0; top: 0; width: 64px; height: 30px; opacity: 0; filter: drop-shadow(0 0 10px rgba(245,185,74,.8)); z-index: 5; }
+  #shieldmini { position: absolute; left: 272px; top: 180px; width: 38px; height: 68px; opacity: 0; }
+
+  /* headline (Rethink: heavy + light pairing) */
+  .ttl { position: absolute; left: 70px; width: 940px; top: 360px; font-size: 76px; line-height: 1.06; letter-spacing: -0.03em; }
+  .ttl .tw { display: inline-block; opacity: 0; font-weight: 800; }
+  .ttl .lt { font-weight: 300; }
+  .ttl .acc { color: var(--accent); } .ttl .bad { color: var(--bad); } .ttl .good { color: var(--good); }
+
+  /* neon hairline panels (Algo Reels) */
+  .panel { position: absolute; border-radius: 18px; background: rgba(12,15,28,.78); border: 1.5px solid var(--c, rgba(124,140,255,.45));
+    box-shadow: 0 0 28px -6px var(--c, rgba(124,140,255,.45)), inset 0 1px 0 rgba(255,255,255,.04); opacity: 0; }
+  .panel .hd { position: absolute; left: 22px; top: 14px; font: 500 28px var(--mono); letter-spacing: .1em; color: var(--hc, #AEB8FF); }
+  .term { font: 400 30px var(--mono); color: var(--ink); }
+  .term .ln { position: absolute; left: 28px; white-space: pre; }
+  .term .ps { color: var(--accent); }
+  .ok { color: var(--good); } .warn { color: var(--warn); } .badc { color: var(--bad); }
+
+  /* numerals (Rethink gradient) */
+  .num { position: absolute; left: 70px; width: 940px; text-align: center; font: 800 200px var(--display); letter-spacing: -0.05em; line-height: 1;
+    background: linear-gradient(180deg, #EEF1FF 20%, #7C8CFF 100%); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: 0; font-variant-numeric: tabular-nums; }
+  .lbl { position: absolute; left: 70px; width: 940px; text-align: center; font: 500 28px var(--mono); letter-spacing: .08em; line-height: 1.5; color: var(--mute); opacity: 0; }
+  .chip { position: absolute; font: 700 28px var(--mono); padding: 10px 18px; border-radius: 10px; border: 1.5px solid var(--c); color: var(--c); background: rgba(12,15,28,.85);
+    box-shadow: 0 0 18px -6px var(--c); white-space: nowrap; opacity: 0; }
+
+  /* "THIS IS CALLED" callout */
+  .called { position: absolute; left: 0; width: 1080px; text-align: center; opacity: 0; }
+  .called small { display: block; font: 500 28px var(--mono); letter-spacing: .22em; color: var(--mute); margin-bottom: 10px; }
+  .called span { display: inline-block; font: 800 46px var(--display); padding: 12px 26px; border-radius: 14px; border: 1.5px solid var(--good); color: var(--good); background: rgba(12,15,28,.85); box-shadow: 0 0 30px -8px var(--good); }
+
+  /* dot matrix (Rethink "this is you.") + scan beam */
+  #matrixwrap { position: absolute; left: 149px; top: 590px; width: 782px; height: 506px; opacity: 0; }
+  #matrix circle { fill: rgba(238,241,255,.82); }
+  #beam { position: absolute; top: -20px; left: 0; width: 120px; height: 546px; background: linear-gradient(90deg, transparent, rgba(124,140,255,.35), transparent); opacity: 0; }
+  #hottag { position: absolute; left: 524px; top: 827px; font: 500 28px var(--mono); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,90,110,.6); color: #FFD5DB; background: rgba(20,8,14,.9); opacity: 0; }
+
+  /* tilted plane of masked key chips (Rethink role wall) */
+  #planewrap { position: absolute; left: -200px; top: 560px; width: 1480px; height: 560px; overflow: hidden; opacity: 0;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 35%, transparent 75%); }
+  #plane { position: absolute; left: 0; top: -160px; width: 1900px; display: flex; flex-wrap: wrap; gap: 14px 18px;
+    transform-origin: 50% 50%; }
+  .kchip { font: 500 22px var(--mono); color: rgba(198,206,255,.55); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(124,140,255,.25); background: rgba(20,26,56,.55); }
+  .kchip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 8px; }
+  #scrim { position: absolute; left: 40px; top: 580px; width: 1000px; height: 560px; border-radius: 50%; background: radial-gradient(ellipse, rgba(7,9,15,.92) 30%, transparent 70%); opacity: 0; }
+
+  /* timeline chart (Rethink curve) */
+  #chart { position: absolute; left: 70px; top: 640px; width: 940px; height: 420px; opacity: 0; }
+
+  /* evidence cards: real source pages (tools/capture) — reference: Instagram reel DfH6Z5NzECg */
+  #evl { position: absolute; inset: 0; pointer-events: none; }
+  .evcard { position: absolute; left: 70px; top: 610px; width: 940px; height: 720px; border-radius: 22px; overflow: hidden; opacity: 0;
+    background: #0D1117; border: 1.5px solid rgba(124,140,255,.45); box-shadow: 0 30px 80px -20px rgba(0,0,0,.8), 0 0 34px -8px rgba(124,140,255,.45); }
+  .evbar { position: absolute; left: 0; top: 0; width: 940px; height: 60px; background: #161B26; border-bottom: 1px solid #262D40; font: 500 28px var(--mono); color: #AEB8FF; }
+  .evbar i { position: absolute; top: 24px; width: 12px; height: 12px; border-radius: 50%; background: #3A4160; }
+  .evbar span { position: absolute; left: 92px; top: 12px; }
+  .evbar b { position: absolute; right: 22px; top: 12px; font-weight: 500; color: var(--warn); }
+  .evwin { position: absolute; left: 0; top: 60px; width: 940px; height: 660px; overflow: hidden; }
+  .evin { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .evin img { display: block; }
+  .hl { position: absolute; background: #FFFFFF; mix-blend-mode: difference; transform-origin: 0 50%; transform: scaleX(0); }   /* inverted marker, as in the reference */
+  #flashov { position: absolute; inset: 0; background: #E9ECFF; opacity: 0; pointer-events: none; }
+  #bar, #rail, .step, #key { opacity: 0; }   /* HUD builds in after the opening flash: nothing static at frame 0 */
+
+  /* slot-roll numeral: each digit is a strip that rolls to its value */
+  .slot { white-space: nowrap; background: none !important; color: var(--ink); }
+  .slot .col { display: inline-block; height: 1em; overflow: hidden; vertical-align: top; }
+  .slot .col > div { display: block; }
+  .slot .d { display: block; height: 1em; background: linear-gradient(180deg, #EEF1FF 20%, #7C8CFF 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* captions: middle, karaoke grey to white (both references) */
+  .capg { position: absolute; left: 70px; width: 940px; top: 1400px; text-align: center; font: 700 62px var(--display); letter-spacing: -0.015em; line-height: 1.15; opacity: 0; color: #6A7396; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="__END__" data-width="1080" data-height="1920" data-fps="30" data-motion-blur="on">
+  <!-- background: outside the camera layer (zoom + motion blur smeared it into blocks) -->
+  <div id="bg" data-motion-blur="off"><div id="ground"></div><div class="glow" id="g1" data-layout-ignore></div><div class="glow" id="g2" data-layout-ignore></div><div id="flood"></div></div>
+  <div id="world">
+    <svg id="rings" viewBox="0 0 1080 1080" data-layout-ignore style="position:absolute;left:0;top:400px;width:1080px;height:1080px"><g id="rg1" style="transform-origin:540px 540px"><circle class="rr" cx="540" cy="540" r="330" fill="none" stroke="#7C8CFF" stroke-opacity=".22" stroke-width="2" stroke-dasharray="4 14"/></g><g id="rg2" style="transform-origin:540px 540px"><circle class="rr" cx="540" cy="540" r="420" fill="none" stroke="#7C8CFF" stroke-opacity=".14" stroke-width="2" stroke-dasharray="60 30 6 30"/></g><g id="rg3" style="transform-origin:540px 540px"><circle class="rr" cx="540" cy="540" r="505" fill="none" stroke="#7C8CFF" stroke-opacity=".10" stroke-width="2" stroke-dasharray="2 18"/><circle class="rdot" cx="540" cy="35" r="7" fill="#7C8CFF" fill-opacity=".6"/></g></svg>
+
+
+    <div id="stage" style="position:absolute;left:0;top:80px;width:1080px;height:1920px">
+    <!-- A1: terminal push -->
+    <div class="panel term" id="term1" style="left:110px;top:600px;width:860px;height:320px">
+      <div class="hd">● TERMINAL · ~/my-app</div>
+      <div class="ln" style="top:76px"><span class="ps">$ </span><span id="tl1"></span></div>
+      <div class="ln" style="top:126px"><span class="ps">$ </span><span id="tl2"></span></div>
+      <div id="up" style="position:absolute;left:28px;top:232px;width:800px;height:6px;border-radius:3px;background:#7C8CFF;box-shadow:0 0 12px #7C8CFF;transform-origin:0 50%;transform:scaleX(0)"></div>
+      <div class="ln" style="top:176px"><span class="ps">$ </span><span id="tl3"></span></div>
+      <div class="ln ok" id="tl3o" style="top:254px;opacity:0">→ pushed to public repo ✓</div>
+    </div>
+    <div class="chip" id="orca" style="--c:var(--warn);left:210px;top:960px">ORCA 2023 · AWS KEY</div>
+    <div class="num" id="timer" style="top:640px;font-size:260px">0:00</div>
+    <div class="lbl" id="timer_l" style="top:930px">ORCA 2023 · AWS KEY</div>
+
+    <!-- A2: scale -->
+    <div id="planewrap" data-layout-ignore><!--__PLANE__--></div>
+    <div id="scrim" data-layout-ignore></div>
+    <div class="num slot" id="secrets" style="top:700px"><!--__SECRETS__--></div>
+    <div class="lbl" id="secrets_l" style="top:912px;font-size:30px;left:120px;width:840px;padding:10px 0;border-radius:12px;background:rgba(7,9,15,.9)">SECRETS LEAKED · 2025</div>
+    <div class="lbl" id="secrets_src" style="top:990px;font-size:28px">SOURCE: GITGUARDIAN</div>
+
+    <!-- A3: scanners -->
+    <div id="matrixwrap"><!--__DOTS__--><div id="beam" data-layout-ignore></div></div>
+    <div id="hottag">this is your key.</div>
+
+    <!-- A4: deleted is not gone -->
+    <div class="panel term" id="term2" style="left:110px;top:570px;width:860px;height:250px">
+      <div class="hd">● TERMINAL</div>
+      <div class="ln" style="top:70px"><span class="ps">$ </span><span id="tl4"></span></div>
+      <div class="ln" style="top:120px"><span class="ps">$ </span><span id="tl4b"></span></div>
+      <div class="ln ok" id="tl4o" style="top:180px;opacity:0">✓ commit deleted</div>
+    </div>
+    <svg class="kcopy" id="kc1" viewBox="0 0 64 30"><circle cx="15" cy="15" r="10" fill="none" stroke="#F5B94A" stroke-width="6"/><path d="M25 15 H60 M51 15 V26 M43 15 V23" stroke="#F5B94A" stroke-width="6" stroke-linecap="round"/></svg><svg class="kcopy" id="kc2" viewBox="0 0 64 30"><circle cx="15" cy="15" r="10" fill="none" stroke="#F5B94A" stroke-width="6"/><path d="M25 15 H60 M51 15 V26 M43 15 V23" stroke="#F5B94A" stroke-width="6" stroke-linecap="round"/></svg><svg class="kcopy" id="kc3" viewBox="0 0 64 30"><circle cx="15" cy="15" r="10" fill="none" stroke="#F5B94A" stroke-width="6"/><path d="M25 15 H60 M51 15 V26 M43 15 V23" stroke="#F5B94A" stroke-width="6" stroke-linecap="round"/></svg>
+    <div class="panel" id="cp1" style="--c:rgba(245,185,74,.7);--hc:#F5B94A;left:70px;top:900px;width:290px;height:200px"><div class="hd">GIT HISTORY</div><div class="term warn" style="position:absolute;left:22px;top:110px;font-size:28px">● still here</div></div>
+    <div class="panel" id="cp2" style="--c:rgba(245,185,74,.7);--hc:#F5B94A;left:395px;top:900px;width:290px;height:200px"><div class="hd">FORKS</div><div class="term warn" style="position:absolute;left:22px;top:110px;font-size:28px">● still here</div></div>
+    <div class="panel" id="cp3" style="--c:rgba(245,185,74,.7);--hc:#F5B94A;left:720px;top:900px;width:290px;height:200px"><div class="hd">CACHES</div><div class="term warn" style="position:absolute;left:22px;top:110px;font-size:28px">● still here</div></div>
+
+    <!-- A5: Toyota timeline -->
+    <svg id="chart" viewBox="0 0 940 420">
+      <line x1="40" y1="300" x2="900" y2="300" stroke="#3A4160" stroke-width="2"/>
+      <g font-family="JetBrains Mono" font-size="28" fill="#7D86A8" text-anchor="middle">
+        <text x="90" y="352">DEC 2017</text><text x="850" y="352">SEP 2022</text></g>
+      <defs><linearGradient id="tfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7C8CFF" stop-opacity=".45"/><stop offset="1" stop-color="#7C8CFF" stop-opacity="0"/></linearGradient><clipPath id="tclip"><rect id="tcr" x="0" y="0" width="0" height="420"/></clipPath></defs>
+      <rect x="40" y="200" width="860" height="70" rx="10" fill="url(#tfill)" clip-path="url(#tclip)"/>
+      <path id="tline" d="M40 235 H900" fill="none" stroke="#7C8CFF" stroke-width="5" stroke-linecap="round" style="filter: drop-shadow(0 0 10px #7C8CFF)"/>
+      <circle id="tdot" cx="900" cy="235" r="10" fill="#EEF1FF" opacity="0"/>
+    </svg>
+    <div class="lbl" id="toyota_l" style="top:600px">TOYOTA · OCT 2022</div>
+    <div class="num" id="year" style="top:670px;font-size:130px">2017</div>
+    <div class="num" id="emails" style="top:1060px;font-size:64px">up to 0 emails</div>
+
+    <svg id="arrows" viewBox="0 0 1080 1920" data-layout-ignore style="position:absolute;left:0;top:0;width:1080px;height:1920px;pointer-events:none"><defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#F5B94A"/></marker><marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#7C8CFF"/></marker></defs><path class="arw" id="ab1" d="M540 826 C 540 860, 215 856, 215 892" stroke="#F5B94A" marker-end="url(#ah2)"/><path class="arw" id="ab2" d="M540 826 L 540 892" stroke="#F5B94A" marker-end="url(#ah2)"/><path class="arw" id="ab3" d="M540 826 C 540 860, 865 856, 865 892" stroke="#F5B94A" marker-end="url(#ah2)"/><path class="arw" id="ap1" d="M370 880 H 472" stroke="#7C8CFF" marker-end="url(#ah3)"/><path class="arw" id="ap2" d="M608 880 H 710" stroke="#7C8CFF" marker-end="url(#ah3)"/><path class="arw" id="as1" d="M500 810 H 580" stroke="#7C8CFF" marker-end="url(#ah3)"/></svg>
+    <!-- A6/A7: push protection -->
+    <div class="called" id="called" style="top:520px"><small>THIS IS CALLED</small><span>Push protection</span></div>
+    <div class="panel" id="lapP" style="--c:rgba(124,140,255,.5);left:70px;top:720px;width:290px;height:320px"><div class="hd">● LAPTOP</div></div>
+    <div class="panel" id="ghP" style="--c:rgba(124,140,255,.5);left:720px;top:720px;width:290px;height:320px"><div class="hd">● GITHUB</div></div>
+    <svg id="shieldbig" viewBox="0 0 120 200" style="position:absolute;left:480px;top:740px;width:120px;height:200px;opacity:0"><path d="M60 6 L110 26 V100 C110 148 88 176 60 194 C32 176 10 148 10 100 V26 Z" fill="rgba(74,222,154,.12)" stroke="#4ADE9A" stroke-width="5" style="filter: drop-shadow(0 0 12px #4ADE9A)"/></svg>
+    <svg id="ripples" viewBox="0 0 600 600" style="position:absolute;left:240px;top:540px;width:600px;height:600px;pointer-events:none" data-layout-ignore><circle id="rp1" cx="300" cy="300" r="60" fill="none" stroke="#4ADE9A" stroke-width="4" opacity="0"/><circle id="rp2" cx="300" cy="300" r="60" fill="none" stroke="#4ADE9A" stroke-width="4" opacity="0"/></svg>
+    <div class="chip" id="k_openai" style="--c:var(--good);left:90px;top:800px">OpenAI key</div>
+    <div class="chip" id="k_anth" style="--c:var(--good);left:90px;top:880px">Anthropic key</div>
+    <div class="chip" id="off" style="--c:var(--good);left:400px;top:1070px">✓ PUSH BLOCKED</div>
+    <div class="chip" id="k_gem" style="--c:var(--bad);left:90px;top:800px">Gemini API key</div>
+    <div class="lbl" id="gem_l" style="top:1076px;color:#FF9AA8">NOT PROTECTED · NOV 2026</div>
+
+    <!-- A8: the rule -->
+    <div class="panel term" id="term3" style="left:110px;top:640px;width:860px;height:300px;overflow:hidden">
+      <div id="sweep" data-layout-ignore style="position:absolute;top:0;left:0;width:220px;height:300px;background:linear-gradient(90deg,transparent,rgba(74,222,154,.22),transparent);transform:translateX(-240px)"></div>
+      <div class="hd">● BEFORE FIRST COMMIT</div>
+      <div class="ln" style="top:70px"><span class="ps">$ </span><span id="tr1"></span></div>
+      <div class="ln" style="top:116px"><span class="ps">$ </span><span id="trA"></span></div>
+      <div class="ln" style="top:162px"><span class="ps">$ </span><span id="tr2"></span></div>
+      <div class="ln ok" id="tr2o" style="top:226px;opacity:0">✓ .env not included</div>
+    </div>
+
+    <!-- A9: leaked? rotate first -->
+    <div class="panel" id="st1" style="--c:rgba(245,185,74,.8);--hc:#F5B94A;left:110px;top:700px;width:380px;height:220px"><div class="hd">STEP 1</div><div style="position:absolute;left:22px;top:90px;font:800 44px var(--display)">Rotate the key</div><svg id="rk" viewBox="0 0 64 30" style="position:absolute;right:24px;top:20px;width:64px;height:30px;filter:drop-shadow(0 0 8px rgba(245,185,74,.8))"><circle cx="15" cy="15" r="10" fill="none" stroke="#F5B94A" stroke-width="6"/><path d="M25 15 H60 M51 15 V26 M43 15 V23" stroke="#F5B94A" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <div class="panel" id="st2" style="--c:rgba(124,140,255,.4);left:590px;top:700px;width:380px;height:220px"><div class="hd">STEP 2</div><div style="position:absolute;left:22px;top:90px;font:800 44px var(--display);color:#9AA3C7">Clean history</div></div>
+    
+
+    </div>
+  </div>
+
+  <!-- evidence layer: outside the camera (cam() would push type under the floor) -->
+  <div id="evl"><!--__EVIDENCE__--></div>
+  <div id="flashov" data-layout-ignore></div>
+
+  <!-- HUD -->
+  <div id="bar"><div id="barfill"></div></div>
+
+  <!-- stepper rail: fixed HUD (camera never moves it), the key travels it -->
+  <!-- stepper rail -->
+  <svg id="rail" viewBox="0 0 1080 400" data-layout-ignore><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#3A4160"/></marker></defs><path class="flow" d="M228 214 H354" marker-end="url(#ah)"/><path class="flow" d="M474 214 H600" marker-end="url(#ah)"/><path class="flow" d="M720 214 H846" marker-end="url(#ah)"/></svg>
+  <div class="step" id="s1"><svg viewBox="-52 -52 104 104"><path d="M-26 -16 h52 v30 h-52z M-34 18 h68" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/></svg></div><div class="step" id="s2"><svg viewBox="-52 -52 104 104"><path d="M-22 -24 h36 l10 10 v38 h-46z M-10 -2 a6 6 0 1 0 0.1 0 M-10 4 v12 M-10 4 q0 -6 14 -6" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/></svg></div><div class="step" id="s3"><svg viewBox="-52 -52 104 104"><path d="M-24 18 a34 34 0 0 1 48 -48 M-14 8 a20 20 0 0 1 28 -28 M-3 -3 l20 -20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="-3" cy="-3" r="6" fill="currentColor"/></svg></div><div class="step" id="s4"><svg viewBox="-52 -52 104 104"><path d="M0 -26 a12 12 0 1 1 -0.1 0 M-24 26 q0 -26 24 -26 q24 0 24 26" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+  <svg id="shieldmini" viewBox="0 0 38 68"><path d="M19 3 L34 10 V34 C34 50 27 59 19 65 C11 59 4 50 4 34 V10 Z" fill="rgba(74,222,154,.15)" stroke="#4ADE9A" stroke-width="3"/></svg>
+  <svg id="key" viewBox="0 0 64 30"><circle cx="15" cy="15" r="10" fill="none" stroke="#F5B94A" stroke-width="6"/><path d="M25 15 H60 M51 15 V26 M43 15 V23" stroke="#F5B94A" stroke-width="6" stroke-linecap="round"/></svg>
+
+  <div class="ttl" id="t1"><span class="tw lt">Your</span> <span class="tw lt">key</span> <span class="tw lt">can</span> <span class="tw lt">go</span> <span class="tw acc">public.</span></div>
+  <div class="ttl" id="t2"><span class="tw lt">This</span> <span class="tw lt">isn't</span> <span class="tw">rare.</span></div>
+  <div class="ttl" id="t3"><span class="tw lt">Scanners</span> <span class="tw">never</span> <span class="tw acc">sleep.</span></div>
+  <div class="ttl" id="t4"><span class="tw lt">Deleted</span> <span class="tw">≠</span> <span class="tw bad">gone.</span></div>
+  <div class="ttl" id="t5"><span class="tw lt">Public</span> <span class="tw lt">for</span> <span class="tw bad">~5 years.</span></div>
+  <div class="ttl" id="t6"><span class="tw lt">GitHub</span> <span class="tw lt">blocks</span> <span class="tw good">some keys.</span></div>
+  <div class="ttl" id="t7"><span class="tw lt">Except</span> <span class="tw bad">Gemini.</span></div>
+  <div class="ttl" id="t8"><span class="tw lt">One</span> <span class="tw good">rule.</span></div>
+  <div class="ttl" id="t9"><span class="tw lt">Leaked?</span> <span class="tw acc">Rotate first.</span></div>
+  <div class="ttl" id="t10"><span class="tw lt">Two</span> <span class="tw acc">minutes.</span></div>
+
+  <!--__CAPTIONS__-->
+
+  <div id="vignette"></div>
+  <audio id="mix" class="clip" src="assets/mix.wav" data-start="0" data-duration="__END__" data-has-audio="true"></audio>
+</div>
+
+<script>
+/*__T__*/
+const tl = gsap.timeline({ paused: true });
+const E = { in: "expo.out", cam: "power2.inOut", out: "power3.in" };
+
+function show(id, t, hold, blur) {   // arrive slow (blur-in), leave clean
+  tl.fromTo(id, { opacity: 0, filter: `blur(${blur || 6}px)`, y: 10 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.4, ease: E.in, immediateRender: false }, t);
+  if (hold) tl.to(id, { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: E.out }, t + hold);
+}
+const TITLE_STYLES = {   // HyperFrames motion.md: vary title entrances within a film
+  blur: [{ opacity: 0, filter: "blur(6px)", y: 0 }, { duration: 0.13, ease: "power2.out", stagger: 0.067 }],   // per word, no translate
+  line: [{ opacity: 0, filter: "blur(8px)", y: 0 }, { duration: 0.18, ease: "power2.out", stagger: 0 }],       // whole line blurs in
+  rise: [{ opacity: 0, filter: "blur(0px)", y: 40 }, { duration: 0.5, ease: "expo.out", stagger: 0.08 }],      // per word rise
+};
+function title(id, t0, t1, style) {
+  const w = id + " .tw", [from, how] = TITLE_STYLES[style];
+  tl.fromTo(w, from, { opacity: 1, filter: "blur(0px)", y: 0, ...how, immediateRender: false }, t0);
+  if (t1 < T.end) tl.to(w, { opacity: 0, filter: "blur(6px)", duration: 0.18, ease: E.out, stagger: 0.03 }, t1 - 0.24);
+}
+function step(on, t, color) {          // light the active icon node
+  ["#s1", "#s2", "#s3", "#s4"].forEach(s => {
+    const lit = on.includes(s), c = color || "#7C8CFF";
+    tl.to(s, { color: lit ? c : "#7D86A8", borderColor: lit ? c : "#3A4160", boxShadow: lit ? `0 0 26px -4px ${c}` : "0 0 0 0 rgba(0,0,0,0)", scale: lit ? 1.06 : 1, duration: 0.35, ease: E.cam }, t);
+  });
+}
+function cam(scale, x, y, t, d) { tl.to("#world", { scale, x, y, duration: d || 0.9, ease: E.cam }, t); }
+const P = { s1: [168, 298], s2: [414, 298], s3: [660, 298], s4: [906, 298] };   // key rides just under its icon node
+function keyTo(p, t, d, ease) { tl.to("#key", { x: P[p][0] - 32, y: P[p][1] - 15, duration: d || 0.7, ease: ease || E.cam }, t); }
+function flood(color, op, t) { tl.to("#flood", { backgroundColor: color, opacity: op, duration: 0.4, ease: E.cam }, t); }
+
+// ---------- continuous world motion (authored, seek-safe) ----------
+tl.fromTo("#barfill", { scaleX: 0 }, { scaleX: 1, duration: T.end, ease: "none", immediateRender: true }, 0);   // episode progress
+tl.fromTo("#g1", { x: -40, y: 0 }, { x: 80, y: -60, duration: T.end, ease: "sine.inOut", immediateRender: true }, 0);
+tl.fromTo("#g2", { x: 40, y: 0 }, { x: -90, y: 50, duration: T.end, ease: "sine.inOut", immediateRender: true }, 0);
+gsap.set("#plane", { transformPerspective: 1100, rotationX: 48, rotationZ: -14 });
+tl.fromTo("#plane", { x: 0, rotationZ: -14 }, { x: -420, rotationZ: -2, duration: T.because - T.rare + 0.6, ease: "none", immediateRender: false }, T.rare);   // world turning (~1.2 deg/s)
+
+tl.fromTo("#rg1", { rotation: 0 }, { rotation: 4 * T.end, duration: T.end, ease: "none", immediateRender: true }, 0);    // ~4 deg/s: a world turning, not a UI loop
+tl.fromTo("#rg2", { rotation: 0 }, { rotation: -2.5 * T.end, duration: T.end, ease: "none", immediateRender: true }, 0);
+tl.fromTo("#rg3", { rotation: 0 }, { rotation: 1.5 * T.end, duration: T.end, ease: "none", immediateRender: true }, 0);
+function rings(color, t) { tl.to("#rings .rr", { stroke: color, duration: 0.5, ease: E.cam }, t); tl.to("#rings .rdot", { fill: color, duration: 0.5, ease: E.cam }, t); }   // stroke only: fill turned rings into solid discs
+
+// ---------- frame 0 ----------
+gsap.set("#key", { x: P.s1[0] - 32, y: P.s1[1] - 15 });
+show("#term1", T.open, null, 8);                          // terminal builds in after the evidence flash
+tl.fromTo("#bar,#rail,.step,#key", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: E.in, stagger: 0.04, immediateRender: false }, T.open - 0.05);
+title("#t1", T.open + 0.1, T.rare, "rise");
+step(["#s1"], 0);
+tl.fromTo(".flow", { strokeDashoffset: 0 }, { strokeDashoffset: -18 * Math.round(T.end * 2), duration: T.end, ease: "none", immediateRender: true }, 0);   // data flows along the rail
+tl.fromTo(".arw", { strokeDashoffset: 0 }, { strokeDashoffset: -19 * Math.round(T.end * 2), duration: T.end, ease: "none", immediateRender: true }, 0);   // arrows flow
+
+// ---------- A1: the honeypot ----------
+show("#orca", T.orca, T.two - T.orca - 0.2, 4);
+tl.fromTo("#up", { scaleX: 0, opacity: 1 }, { scaleX: 1, opacity: 1, duration: 0.8, ease: "power1.inOut", immediateRender: false }, T.pushed + 0.6);   // upload runs
+tl.to("#up", { opacity: 0, duration: 0.15 }, T.pushed + 1.45);
+tl.fromTo("#tl3o", { opacity: 0 }, { opacity: 1, duration: 0.25, immediateRender: false }, T.pushed + 1.45);
+keyTo("s2", T.pushed + 1.45, 0.8); step(["#s1", "#s2"], T.pushed + 1.45);
+cam(1.03, 0, 20, T.pushed, 1.2);
+tl.to("#term1", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: E.out }, T.two - 0.2);
+show("#timer", T.two, T.ev_orca - T.two - 0.25, 10); show("#timer_l", T.two + 0.2, T.ev_orca - T.two - 0.45);   // the real report takes over
+keyTo("s4", T.two + 0.4, 0.7, E.out); step(["#s4"], T.two + 0.4, "#FF5A6E");
+flood("#FF5A6E", 0.07, T.two + 1.1); rings("#FF5A6E", T.two); cam(1, 0, 0, T.two, 0.8);
+
+// ---------- A2: scale ----------
+flood("#FF5A6E", 0, T.rare); step([], T.rare);
+title("#t2", T.rare, T.because, "blur"); rings("#F5B94A", T.rare);
+show("#planewrap", T.ev_orca_out + 0.05, T.ev_gg - T.ev_orca_out - 0.05, 12); show("#scrim", T.n2865 - 0.3, T.ev_gg - T.n2865 + 0.3);
+show("#secrets", T.n2865 - 0.15, T.ev_gg - T.n2865 - 0.05); show("#secrets_l", T.n2865, T.ev_gg - T.n2865 - 0.2); show("#secrets_src", T.n2865 + 0.3, T.ev_gg - T.n2865 - 0.5);   // gone before the real page lands
+cam(1, 0, -12, T.rare, 1.4);   // no pull-back: it shrank type under the 28px floor
+
+// ---------- A3: scanners ----------
+title("#t3", T.because, T.deleting, "line"); rings("#7C8CFF", T.because);
+show("#matrixwrap", T.because + 0.1, T.deleting - T.because - 0.45, 10);
+tl.fromTo("#beam", { x: -120, opacity: 1 }, { x: 782, opacity: 1, duration: 1.6, ease: "power1.inOut", immediateRender: false }, T.searchable);
+tl.to("#beam", { opacity: 0, duration: 0.1 }, T.searchable + 1.6);
+tl.fromTo("#beam", { x: -120, opacity: 1 }, { x: 782, opacity: 1, duration: 1.4, ease: "power1.inOut", immediateRender: false }, T.searchable + 1.7);
+tl.to("#beam", { opacity: 0, duration: 0.12 }, T.searchable + 3.1);
+tl.to("#hotdot", { attr: { r: 11 }, fill: "#FF5A6E", duration: 0.3, ease: E.in }, T.shaped);
+show("#hottag", T.shaped + 0.15, T.deleting - T.shaped - 0.5, 4);
+step(["#s2", "#s3"], T.searchable); keyTo("s3", T.scanners, 0.6); cam(1.04, 0, -20, T.because, 1.0);
+
+// ---------- A4: deleted is not gone ----------
+title("#t4", T.deleting, T.toyota, "blur"); cam(1, 0, 0, T.deleting, 0.8);
+show("#term2", T.deleting - 0.1, T.toyota - T.deleting - 0.1);
+tl.fromTo("#tl4o", { opacity: 0 }, { opacity: 1, duration: 0.25, immediateRender: false }, T.deleting + 1.85);   // after the commit line finishes typing
+[["#kc1", T.history, 286], ["#kc2", T.forks, 611], ["#kc3", T.caches, 936]].forEach(([k, t, x]) => {   // the example travels into each copy
+  tl.fromTo(k, { x: 560, y: 690, opacity: 1, scale: 1.2 }, { x, y: 1056, opacity: 1, scale: 1, duration: 0.55, ease: E.in, immediateRender: false }, t - 0.2);   // lands bottom-right of the card, clear of its text
+  tl.to(k, { opacity: 0, duration: 0.2 }, T.toyota - 0.05);
+});
+show("#ab1", T.history - 0.3, T.toyota - T.history - 0.1, 2); show("#ab2", T.forks - 0.3, T.toyota - T.forks - 0.1, 2); show("#ab3", T.caches - 0.5, T.toyota - T.caches - 0.1, 2);
+show("#cp1", T.history - 0.25, T.toyota - T.history + 0.2); show("#cp2", T.forks - 0.25, T.toyota - T.forks + 0.2); show("#cp3", T.caches - 0.45, T.toyota - T.caches + 0.4);
+
+// ---------- A5: Toyota ----------
+title("#t5", T.toyota, T.pp, "rise"); cam(1.04, 0, -20, T.toyota, 1.4);
+const TC = T.ev_toy_out;   // the timeline starts when the real disclosure page leaves
+show("#toyota_l", TC, T.pp - TC - 0.25); show("#chart", TC + 0.1, T.pp - TC - 0.35);
+tl.fromTo("#tline", { strokeDasharray: 1100, strokeDashoffset: 1100 }, { strokeDashoffset: 0, duration: T.five - TC - 0.1, ease: "power1.inOut", immediateRender: true }, TC + 0.15);
+tl.fromTo("#tcr", { attr: { width: 40 } }, { attr: { width: 900 }, duration: T.five - TC - 0.1, ease: "power1.inOut", immediateRender: false }, TC + 0.15);
+tl.to("#tdot", { opacity: 1, duration: 0.2 }, T.five);
+show("#year", TC + 0.2, T.pp - TC - 0.45);
+show("#emails", T.five - 0.3, T.pp - 0.25 - (T.five - 0.3));   // final value readable ~1 s, gone before the next scene
+
+// ---------- A6: push protection ----------
+title("#t6", T.pp, T.gemini, "line"); rings("#4ADE9A", T.pp); cam(1, 0, 0, T.pp, 0.9);
+show("#called", T.pp_word, T.gemini - T.pp_word - 0.2, 10);
+show("#lapP", T.pp + 0.3, T.rule - T.pp - 0.5); show("#ap1", T.pp_word + 0.2, T.rule - T.pp_word - 0.5, 2); show("#ap2", T.pp_word + 0.3, T.rule - T.pp_word - 0.6, 2); show("#ghP", T.pp + 0.4, T.rule - T.pp - 0.6);
+tl.fromTo("#shieldbig", { opacity: 0, y: -60, scale: 0.7 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.3)", immediateRender: false }, T.pp_word);
+tl.to("#shieldbig", { opacity: 0, duration: 0.2, ease: E.out }, T.rule - 0.2);
+tl.fromTo("#shieldmini", { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.3)", immediateRender: false }, T.pp_word);
+keyTo("s1", T.pp, 0.6); step(["#s1", "#s2"], T.pp, "#4ADE9A");
+flood("#4ADE9A", 0.06, T.pp_word);
+show("#k_openai", T.openai - 0.1); tl.to("#k_openai", { x: 200, duration: 0.35, ease: "power2.in" }, T.openai + 0.3);
+tl.to("#k_openai", { x: 0, duration: 0.55, ease: "back.out(1.2)" }, T.openai + 0.65);
+show("#k_anth", T.anthropic - 0.1); tl.to("#k_anth", { x: 180, duration: 0.35, ease: "power2.in" }, T.anthropic + 0.3);
+tl.to("#k_anth", { x: 0, duration: 0.55, ease: "back.out(1.2)" }, T.anthropic + 0.65);
+[["#rp1", T.openai + 0.6], ["#rp2", T.anthropic + 0.6]].forEach(([r, t]) =>   // impact: caused by the bounce
+  tl.fromTo(r, { attr: { r: 60 }, opacity: 0.9 }, { attr: { r: 280 }, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, t));
+show("#off", T.switch, T.gemini - T.switch - 0.2);
+tl.to("#k_openai,#k_anth", { opacity: 0, filter: "blur(6px)", duration: 0.2 }, T.gemini - 0.2);
+
+// ---------- A7: the exception ----------
+title("#t7", T.gemini, T.rule, "blur"); rings("#FF5A6E", T.gemini);
+flood("#FF5A6E", 0.07, T.gemini + 0.3); cam(1.04, 40, 0, T.gemini, 0.9);
+show("#k_gem", T.gemini);
+tl.to("#k_gem", { x: 640, duration: 1.0, ease: "power2.inOut" }, T.gemini + 0.5);
+tl.to("#ghP", { borderColor: "#FF5A6E", boxShadow: "0 0 30px -6px #FF5A6E", duration: 0.3 }, T.gemini + 1.4);
+show("#gem_l", T.gemini + 0.35, T.rule - T.gemini - 0.4);
+tl.to("#k_gem", { opacity: 0, filter: "blur(6px)", duration: 0.2 }, T.rule - 0.2);
+
+// ---------- A8: the rule ----------
+flood("#FF5A6E", 0, T.rule);
+title("#t8", T.rule, T.leaks, "blur"); rings("#4ADE9A", T.rule); cam(1, 0, 0, T.rule, 0.8); step(["#s1"], T.rule, "#4ADE9A");
+show("#term3", T.rule + 0.1, T.leaks - T.rule - 0.3);
+tl.fromTo("#sweep", { x: -240 }, { x: 900, duration: 0.7, ease: "power2.inOut", immediateRender: false }, T.gitignore + 0.3);   // the command runs
+tl.fromTo("#tr2o", { opacity: 0 }, { opacity: 1, duration: 0.25, immediateRender: false }, T.first + 0.15);
+
+// ---------- A9: leaked? ----------
+title("#t9", T.leaks, T.cb, "rise"); cam(1.03, 0, -10, T.leaks, 1.0);
+show("#st1", T.rotate - 0.1, T.cb - T.rotate); show("#as1", T.rotate + 0.3, T.cb - T.rotate - 0.5, 2);
+tl.fromTo("#rk", { rotation: 0 }, { rotation: 360, duration: 0.9, ease: "power2.inOut", transformOrigin: "50% 50%", immediateRender: false }, T.rotate + 0.1);
+show("#st2", T.clean - 0.1, T.cb - T.clean - 0.1);
+
+// ---------- A10: callback ----------
+title("#t10", T.cb, T.end + 1, "line"); rings("#7C8CFF", T.cb); cam(1, 0, 0, T.cb, 1.2);
+tl.set("#timer", { textContent: "2:00" }, T.cb);
+show("#timer", T.cb + 0.2, null, 10); show("#timer_l", T.cb + 0.4);
+tl.to("#shieldmini", { opacity: 0, duration: 0.25, ease: E.out }, T.cb);   // the test had no shield
+keyTo("s4", T.head, 1.0); step(["#s4"], T.head, "#FF5A6E");
+
+// counters, typing, captions (authored frame rows)
+/*__COUNTERS_JS__*/
+/*__TYPED_JS__*/
+/*__EVIDENCE_JS__*/
+/*__SLOT_JS__*/
+/*__CAPTIONS_JS__*/
+
+window.__timelines = window.__timelines || {};
+window.__timelines["main"] = tl;
+tl.seek(0);
+</script>
+</body>
+</html>
