@@ -1,15 +1,19 @@
-"""Master an ElevenLabs voice take for Shorts: EQ/de-ess/compress, cap pauses, hit -14 LUFS / -1.5 dBFS.
+"""Master an ElevenLabs voice take for Shorts: slow to config tempo, EQ/de-ess/compress,
+set every sentence pause to config pause_s, hit -14 LUFS / -1.5 dBFS.
 
 usage: python3 master.py in.mp3 out.wav
 """
-import os, re, shutil, subprocess, sys, tempfile
+import json, os, re, shutil, subprocess, sys, tempfile
 
 SRC, OUT = sys.argv[1], sys.argv[2]
-KEEP = 0.25          # seconds of silence kept per pause
-MIN_PAUSE = 0.30     # pauses longer than this get capped to KEEP
+_CFG = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", "voice.json")))
+TEMPO = _CFG["tempo"]      # eleven_v4 ignores voice_settings.speed (A/B 2026-11-06: same length), so pace is set here
+KEEP = _CFG["pause_s"]     # every pause >= MIN_PAUSE becomes exactly KEEP seconds (shortened or lengthened)
+MIN_PAUSE = 0.30           # shorter gaps (commas, breaths) are left as spoken
 THRESH = "-40dB"
 TARGET, TOL, MAX_PASSES = -14.0, 0.3, 3
-CHAIN = ("highpass=f=80,equalizer=f=250:t=q:w=1.2:g=-2,equalizer=f=3500:t=q:w=1.0:g=2,"
+CHAIN = (f"atempo={TEMPO},"
+         "highpass=f=80,equalizer=f=250:t=q:w=1.2:g=-2,equalizer=f=3500:t=q:w=1.0:g=2,"
          "highshelf=f=10000:g=1.5,deesser=i=0.4,"
          "acompressor=threshold=-20dB:ratio=2.5:attack=10:release=120:makeup=2")
 
@@ -36,24 +40,39 @@ TMP = tempfile.mkdtemp(prefix="master-")
 S1, S2 = os.path.join(TMP, "s1.wav"), os.path.join(TMP, "s2.wav")
 ff("-i", SRC, "-af", CHAIN, "-ar", "48000", S1)
 
-# keep speech + KEEP seconds of each long pause (centered), drop the rest
-e = ff("-i", S1, "-af", f"silencedetect=noise={THRESH}:d={MIN_PAUSE}", "-f", "null", "-")
+# every long pause becomes exactly KEEP seconds: trim around its middle, or pad silence into its middle.
+# (Before 2026-11-06 this loop REMOVED KEEP from each pause instead of keeping KEEP: 21 pauses x 0.25 s = the
+#  5.25 s lost on the Kimi take, turning 0.35 s sentence breaks into 0.10 s — "feels fast".)
+# S1 is already slowed by TEMPO, so the comma/sentence cut-off is scaled too (else a 0.28 s comma became 0.30 s and got padded)
+e = ff("-i", S1, "-af", f"silencedetect=noise={THRESH}:d={MIN_PAUSE / TEMPO:.3f}", "-f", "null", "-")
 starts = [float(x) for x in re.findall(r"silence_start: (-?[\d.]+)", e)]
 ends = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", e)]
 total = duration(S1)
-keep, cur = [], 0.0
+segs, cur = [], 0.0                    # ("a", start, end) = audio slice; ("z", dur) = inserted silence
 for s, en in zip(starts, ends):
     s = max(s, 0.0)
     if s == 0.0:                       # leading silence: drop all but 0.05s
         cur = max(en - 0.05, 0.0)
         continue
     mid = (s + en) / 2
-    keep.append((cur, mid - KEEP / 2))
-    cur = mid + KEEP / 2
-keep.append((cur, total))
-parts = "".join(f"[0:a]atrim={a:.3f}:{b:.3f},asetpts=PTS-STARTPTS[p{i}];" for i, (a, b) in enumerate(keep))
-ff("-i", S1, "-filter_complex", parts + "".join(f"[p{i}]" for i in range(len(keep)))
-   + f"concat=n={len(keep)}:v=0:a=1[o]", "-map", "[o]", S2)
+    if en - s >= KEEP:
+        segs.append(("a", cur, mid - KEEP / 2))
+        cur = mid + KEEP / 2
+    else:
+        segs += [("a", cur, mid), ("z", KEEP - (en - s))]
+        cur = mid
+segs.append(("a", cur, total))
+parts = "".join(f"[0:a]atrim={g[1]:.3f}:{g[2]:.3f},asetpts=PTS-STARTPTS[p{i}];" if g[0] == "a"
+                else f"aevalsrc=0:d={g[1]:.3f}:s=48000:c=mono,asetpts=PTS-STARTPTS[p{i}];"
+                for i, g in enumerate(segs))
+ff("-i", S1, "-filter_complex", parts + "".join(f"[p{i}]" for i in range(len(segs)))
+   + f"concat=n={len(segs)}:v=0:a=1[o]", "-map", "[o]", S2)
+
+# guard: every long pause must come out ~KEEP long (the old loop shrank all 21 to ~0.10 s and nothing noticed)
+want = sum(1 for x in starts if x > 0)
+got = len(re.findall(r"silence_end", ff("-i", S2, "-af", f"silencedetect=noise={THRESH}:d={KEEP * 0.75:.3f}", "-f", "null", "-")))
+if got != want:
+    sys.exit(f"pause guard: expected {want} pauses of ~{KEEP}s, found {got}")
 
 gain = TARGET - loudness(S2)[0]
 for n in range(1, MAX_PASSES + 1):
@@ -67,4 +86,4 @@ else:
     sys.exit(f"loudness did not converge within {MAX_PASSES} passes")
 
 shutil.rmtree(TMP)
-print(f"pauses capped: {len(starts)} | duration {duration(SRC):.2f}s -> {duration(OUT):.2f}s")
+print(f"tempo {TEMPO} | pauses set to {KEEP}s: {len(starts)} | duration {duration(SRC):.2f}s -> {duration(OUT):.2f}s")
