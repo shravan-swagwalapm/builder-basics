@@ -67,15 +67,12 @@ async function captureWeb(browser, s) {
   const resp = await page.goto(s.url, { waitUntil: "networkidle2", timeout: 60000 });
   if (!resp || resp.status() >= 400) die(`${s.id}: HTTP ${resp && resp.status()} for ${s.url}`);
   // plain-text files (raw LICENSE): wrap lines as desktop Chrome's text viewer does, and give them a phone viewport —
-  // with no <meta viewport>, mobile emulation lays them out 980 px wide and zooms out. Applied before any measuring,
-  // then a settle wait: the viewport change lands a frame later, and measuring earlier scrolled the quote off the photo.
-  if (await page.evaluate(() => document.contentType === "text/plain")) {
-    await page.evaluate(() => {
-      for (const pre of document.querySelectorAll("pre")) pre.style.cssText += ";white-space:pre-wrap;overflow-wrap:anywhere";
-      document.head.insertAdjacentHTML("beforeend", '<meta name="viewport" content="width=device-width,initial-scale=1">');
-    });
-    await new Promise((r) => setTimeout(r, 400));
-  }
+  // with no <meta viewport>, mobile emulation lays them out 980 px wide and zooms out, so a quote line overran the photo.
+  await page.evaluate(() => {
+    if (document.contentType !== "text/plain") return;
+    for (const pre of document.querySelectorAll("pre")) pre.style.cssText += ";white-space:pre-wrap;overflow-wrap:anywhere";
+    document.head.insertAdjacentHTML("beforeend", '<meta name="viewport" content="width=device-width,initial-scale=1">');
+  });
   await page.evaluate(() => document.fonts.ready);
   const title = await page.title();
   const body = await page.evaluate(() => document.body.innerText);
