@@ -66,6 +66,16 @@ async function captureWeb(browser, s) {
   await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: s.dark === false ? "light" : "dark" }]);
   const resp = await page.goto(s.url, { waitUntil: "networkidle2", timeout: 60000 });
   if (!resp || resp.status() >= 400) die(`${s.id}: HTTP ${resp && resp.status()} for ${s.url}`);
+  // plain-text files (raw LICENSE): wrap lines as desktop Chrome's text viewer does, and give them a phone viewport —
+  // with no <meta viewport>, mobile emulation lays them out 980 px wide and zooms out. Applied before any measuring,
+  // then a settle wait: the viewport change lands a frame later, and measuring earlier scrolled the quote off the photo.
+  if (await page.evaluate(() => document.contentType === "text/plain")) {
+    await page.evaluate(() => {
+      for (const pre of document.querySelectorAll("pre")) pre.style.cssText += ";white-space:pre-wrap;overflow-wrap:anywhere";
+      document.head.insertAdjacentHTML("beforeend", '<meta name="viewport" content="width=device-width,initial-scale=1">');
+    });
+    await new Promise((r) => setTimeout(r, 400));
+  }
   await page.evaluate(() => document.fonts.ready);
   const title = await page.title();
   const body = await page.evaluate(() => document.body.innerText);
@@ -80,9 +90,10 @@ async function captureWeb(browser, s) {
       else if (cs.position === "sticky") el.style.setProperty("position", "relative", "important");
     }
     const textNodes = () => {
-      const out = [], tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: (n) => /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(n.parentElement?.tagName || "") ? 2 : 1 });
-      while (tw.nextNode()) out.push(tw.currentNode);
+      // no filter callback: Chrome throws "callback is no longer runnable" for ANY TreeWalker callback on a
+      // text/plain document (raw LICENSE files; probed 2026-11-06), so script/style text is skipped in the loop instead
+      const out = [], tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (tw.nextNode()) if (!/^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(tw.currentNode.parentElement?.tagName || "")) out.push(tw.currentNode);
       return out;
     };
     const secretRe = new RegExp(SECRET_RES.join("|"), "g");
@@ -149,8 +160,11 @@ async function captureWeb(browser, s) {
   const y0 = Math.max(0, Math.min(Math.round(cy - m.clipH * 0.42), prep.pageH - m.clipH));
   await page.evaluate((y, ph) => {
     scrollTo(0, y);
-    const r = window.__hosts[ph].getBoundingClientRect();
-    if (r.top < 0 || r.bottom > innerHeight) window.__hosts[ph].scrollIntoView({ block: "center" });   // page scrolls inside a panel, not the window
+    // judge the QUOTE's own rects, not its host: a host taller than the viewport (a raw LICENSE's single <pre>) always
+    // looked off-screen, so it was re-centred and the quote scrolled out of the photo (probed 2026-11-06)
+    const R = window.__locate([ph])[0].rects;
+    const off = !R || Math.min(...R.map((q) => q[1])) < 0 || Math.max(...R.map((q) => q[1] + q[3])) > innerHeight;
+    if (off) window.__hosts[ph].scrollIntoView({ block: "center" });   // page scrolls inside a panel, not the window
   }, y0, s.phrases[0]);
   await new Promise((r) => setTimeout(r, 900));       // lazy images settle
   // pass 2: measure in the layout we photograph; occlusion guard = the pixel at each highlight centre belongs to the quote

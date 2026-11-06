@@ -10,5 +10,8 @@
  "language_code": null,
  "output_format": "mp3_44100_128",
  "seed": 42,
- "post": "tools/master.py (-14 LUFS, -1 dBTP, pauses capped 0.25s)"
+ "tempo": 0.92,
+ "pause_s": 0.65,
+ "_pace_note": "eleven_v4 ignores voice_settings.speed, so master.py slows the take by tempo (atempo, pitch kept) and sets every sentence pause (>= 0.30 s) to pause_s. 0.92 / 0.65 = ~155 wpm, an educational pace.",
+ "post": "tools/master.py (tempo + pause_s from this file, -14 LUFS, -1 dBTP)"
 }
