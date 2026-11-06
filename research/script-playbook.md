@@ -26,7 +26,7 @@ The hook *formula* doesn't separate winners. What happens inside the script has 
 10. **An authority must hand over a tool.** "OWASP ranks it #1" is a citation the viewer can't use. Willison's three-part test is something they keep.
 11. **Claims say exactly what the source says.** OWASP lists prompt injection as LLM01 but doesn't say the list is ranked by risk.
 12. **Calm register.** Fragments make a calm clone swing up and down, which voice.md bans. *Check: median sentence 7–14 words; at most 1 rhetorical question; no hype words.*
-13. **Budget words to pace.** Fireship runs 3.5–3.85 words/s, too fast for this voice. Shravan's last take ran 179 wpm. Plan at 165: 96–137 words for 35–50s.
+13. **Budget words to pace.** Fireship runs 3.5–3.85 words/s, too fast for this voice. Since 2026-11-06 master.py slows takes to an educational ~155 wpm (config/voice.json `tempo` + `pause_s`; Shravan: "slightly slower… up to 150 s"). Plan at 155: ~2.6 words/s, so 120 s ≈ 310 words. (The 35–50 s template below predates this.)
 14. **Every sentence changes the diagram.** Each line names the node or edge that appears, lights or breaks.
 
 **vs the installed skills.**
