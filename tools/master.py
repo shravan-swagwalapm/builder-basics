@@ -43,7 +43,8 @@ ff("-i", SRC, "-af", CHAIN, "-ar", "48000", S1)
 # every long pause becomes exactly KEEP seconds: trim around its middle, or pad silence into its middle.
 # (Before 2026-11-06 this loop REMOVED KEEP from each pause instead of keeping KEEP: 21 pauses x 0.25 s = the
 #  5.25 s lost on the Kimi take, turning 0.35 s sentence breaks into 0.10 s — "feels fast".)
-e = ff("-i", S1, "-af", f"silencedetect=noise={THRESH}:d={MIN_PAUSE}", "-f", "null", "-")
+# S1 is already slowed by TEMPO, so the comma/sentence cut-off is scaled too (else a 0.28 s comma became 0.30 s and got padded)
+e = ff("-i", S1, "-af", f"silencedetect=noise={THRESH}:d={MIN_PAUSE / TEMPO:.3f}", "-f", "null", "-")
 starts = [float(x) for x in re.findall(r"silence_start: (-?[\d.]+)", e)]
 ends = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", e)]
 total = duration(S1)
@@ -66,6 +67,12 @@ parts = "".join(f"[0:a]atrim={g[1]:.3f}:{g[2]:.3f},asetpts=PTS-STARTPTS[p{i}];" 
                 for i, g in enumerate(segs))
 ff("-i", S1, "-filter_complex", parts + "".join(f"[p{i}]" for i in range(len(segs)))
    + f"concat=n={len(segs)}:v=0:a=1[o]", "-map", "[o]", S2)
+
+# guard: every long pause must come out ~KEEP long (the old loop shrank all 21 to ~0.10 s and nothing noticed)
+want = sum(1 for x in starts if x > 0)
+got = len(re.findall(r"silence_end", ff("-i", S2, "-af", f"silencedetect=noise={THRESH}:d={KEEP * 0.75:.3f}", "-f", "null", "-")))
+if got != want:
+    sys.exit(f"pause guard: expected {want} pauses of ~{KEEP}s, found {got}")
 
 gain = TARGET - loudness(S2)[0]
 for n in range(1, MAX_PASSES + 1):
